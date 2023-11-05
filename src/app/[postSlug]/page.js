@@ -4,21 +4,30 @@ import BlogHero from '@/components/BlogHero';
 
 import styles from './postSlug.module.css';
 
-function BlogPost() {
+import { loadBlogPost } from '@/helpers/file-helpers';
+
+import CustomMDX from '@/components/CustomMDX';
+
+export async function generateMetadata({ params }) {
+  const { frontmatter } = await loadBlogPost(params.postSlug)
+
+  return {
+    title: frontmatter.title,
+    description: frontmatter.abstract
+  }
+}
+
+
+const BlogPost = async ({ params }) => {
+  const { frontmatter, content } = await loadBlogPost(params.postSlug)
+
   return (
     <article className={styles.wrapper}>
       <BlogHero
-        title="Example post!"
-        publishedOn={new Date()}
+        title={frontmatter.title}
+        publishedOn={frontmatter.publishedOn}
       />
-      <div className={styles.page}>
-        <p>This is where the blog post will go!</p>
-        <p>
-          You will need to use <em>MDX</em> to render all of
-          the elements created from the blog post in this
-          spot.
-        </p>
-      </div>
+      <CustomMDX source={content} />
     </article>
   );
 }
