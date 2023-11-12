@@ -11,20 +11,21 @@ import Equation from './Equation';
 import styles from './DivisionGroupsDemo.module.css';
 
 function DivisionGroupsDemo({
-  numOfItems = 11,
+  numOfItems = 12,
   initialNumOfGroups = 1,
   includeRemainderArea,
 }) {
-  const gId = React.useId();
-  const itemId = React.useId();
-
   const [numOfGroups, setNumOfGroups] = React.useState(
     initialNumOfGroups
   );
 
+  const id = React.useId();
+
   const numOfItemsPerGroup = Math.floor(
     numOfItems / numOfGroups
   );
+
+  const totalNumInGroups = numOfGroups * numOfItemsPerGroup;
 
   const remainder = includeRemainderArea
     ? numOfItems % numOfGroups
@@ -43,52 +44,56 @@ function DivisionGroupsDemo({
       };
 
   return (
-    <Card as="section" className={styles.wrapper}>
-      <header className={styles.header}>
-        <SliderControl
-          label="Number of Groups"
-          className={styles.slider}
-          step={1}
-          min={1}
-          max={4}
-          value={numOfGroups}
-          onChange={(ev) =>
-            setNumOfGroups(Number(ev.target.value))
-          }
-        />
-      </header>
+    <LayoutGroup>
+      <Card as="section" className={styles.wrapper}>
+        <header className={styles.header}>
+          <SliderControl
+            label="Number of Groups"
+            className={styles.slider}
+            step={1}
+            min={1}
+            max={4}
+            value={numOfGroups}
+            onChange={(ev) =>
+              setNumOfGroups(Number(ev.target.value))
+            }
+          />
+        </header>
 
-      <LayoutGroup>
         <div className={styles.demoWrapper}>
           <div
             className={clsx(styles.demoArea)}
             style={gridStructure}
           >
             {range(numOfGroups).map((groupIndex) => {
-              const groupID = `${gId}-${groupIndex}`
               return (
-                <motion.div
+                <div
                   key={groupIndex}
                   className={styles.group}
-                  layoutId={groupID}
                 >
                   {range(numOfItemsPerGroup).map((index) => {
+                    const totalFromPreviousGroup = groupIndex * numOfItemsPerGroup;
+                    // Remember: The 'id' is soley in use to make certain that the 
+                    // layoutID and key of one instance of this component, is not
+                    // the same of another, otherwise animated elements could be
+                    // moved between two instances. We don't want that, we want them
+                    // to stay confined to the compenent that is being rendered.
+                    const layoutId = `${id}-${index + totalFromPreviousGroup + 1}`
+                    // const itemId = index + totalFromPreviousGroup + 1;
                     return (
                       <motion.div
-                        key={index}
                         className={styles.item}
-                        layoutId={itemId}
+                        key={layoutId}
+                        layoutId={layoutId}
                         transition={{
                           type: 'spring',
                           stiffness: 200,
                           damping: 40,
                         }}
-                      >
-                        {index}
-                      </motion.div>
+                      />
                     );
                   })}
-                </motion.div>
+                </div>
               )
             })}
           </div>
@@ -99,27 +104,41 @@ function DivisionGroupsDemo({
               Remainder Area
             </p>
 
-            {range(remainder).map((index) => {
-              return (
-                <motion.div
-                  key={index}
-                  className={styles.item}
-                  layoutId={itemId}
-                >
-                  {index}
-                </motion.div>
-              );
-            })}
+            {range(totalNumInGroups, numOfItems)
+              .reverse()
+              .map((index) => {
+                // {range(remainder).map((index) => {
+                // Instead of using the remainder to iterate over, I can expand the usage of 'range'
+                // by using the 'start & stop' syntax. Start would be where the quotient stops 
+                // (numOfGroups * numOfItemsPerGroup). Stop would be the max allowed bounds, which is
+                // numOfItems.
+                // const totalFromAllGroups = numOfGroups * numOfItemsPerGroup;
+                // const layoutId = `${id}-${index + totalFromAllGroups + 1}`
+                // const itemId = index + totalFromAllGroups + 1;
+                const layoutId = `${id}-${index + 1}`
+                return (
+                  <motion.div
+                    className={styles.item}
+                    key={layoutId}
+                    layoutId={layoutId}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 200,
+                      damping: 40,
+                    }}
+                  />
+                );
+              })}
           </div>
         )}
-      </LayoutGroup>
 
-      <Equation
-        dividend={numOfItems}
-        divisor={numOfGroups}
-        remainder={remainder}
-      />
-    </Card >
+        <Equation
+          dividend={numOfItems}
+          divisor={numOfGroups}
+          remainder={remainder}
+        />
+      </Card >
+    </LayoutGroup>
   );
 }
 
